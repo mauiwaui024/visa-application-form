@@ -1,0 +1,31 @@
+services:
+  backend:
+    image: visa-application-backend:${IMAGE_TAG}
+    container_name: visa-application-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - backend-generated-forms:/app/generated-forms
+    networks:
+      - app-net
+
+  frontend:
+    image: visa-application-frontend:${IMAGE_TAG}
+    container_name: visa-application-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge
+
+volumes:
+  backend-generated-forms:
