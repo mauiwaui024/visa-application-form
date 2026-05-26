@@ -30,10 +30,10 @@ type DBConfig struct {
 }
 
 type Background struct {
-	Name      string
-	Schedule  string
+	Name       string
+	Schedule   string
 	RetryDelay time.Duration
-	OutputDir string
+	OutputDir  string
 }
 
 type Mail struct {
@@ -65,13 +65,13 @@ func NewConfig() *Config {
 			ConnMaxLifetime: getDurationFromEnv("DB_CONN_MAX_LIFETIME_SECONDS", 300),
 		},
 		Background: Background{
-			Name:      getEnv("BACKGROUND_NAME", "form-processor"),
-			Schedule:  getEnv("BACKGROUND_SCHEDULE", "1s"),
+			Name:       getEnv("BACKGROUND_NAME", "form-processor"),
+			Schedule:   getEnv("BACKGROUND_SCHEDULE", "1s"),
 			RetryDelay: getDurationFromEnv("BACKGROUND_RETRY_DELAY_SECONDS", 1),
-			OutputDir: getEnv("BACKGROUND_OUTPUT_DIR", "./generated-forms"),
+			OutputDir:  getEnv("BACKGROUND_OUTPUT_DIR", "./generated-forms"),
 		},
 		Mail: Mail{
-			Enabled:       getBoolFromEnv("MAIL_ENABLED", false),
+			Enabled:       getBoolFromEnv("MAIL_ENABLED", true),
 			SMTPHost:      getEnv("MAIL_SMTP_HOST", "smtp.yandex.ru"),
 			SMTPPort:      getIntFromEnv("MAIL_SMTP_PORT", 465),
 			Username:      getEnv("MAIL_USERNAME", ""),
