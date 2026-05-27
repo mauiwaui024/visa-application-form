@@ -1,4 +1,4 @@
--- Active: 1760541509356@@localhost@5433@visa_application_db
+-- Active: 1760541509356@@168.222.143.161@5432@visa_application_db
 BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS form;
