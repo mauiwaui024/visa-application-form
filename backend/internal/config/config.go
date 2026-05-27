@@ -54,7 +54,7 @@ func NewConfig() *Config {
 		HTTPReadTimeout:  getDurationFromEnv("HTTP_READ_TIMEOUT_SECONDS", 15),
 		HTTPWriteTimeout: getDurationFromEnv("HTTP_WRITE_TIMEOUT_SECONDS", 15),
 		DB: DBConfig{
-			Host:            getEnv("DB_HOST", "localhost"),
+			Host:            getEnv("DB_HOST", "postgres"),
 			Port:            getEnv("DB_PORT", "5432"),
 			User:            getEnv("DB_USER", "postgres"),
 			Password:        getEnv("DB_PASSWORD", "postgres"),
