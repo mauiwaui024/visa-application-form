@@ -34,7 +34,10 @@ jobs:
           DOCKER_BUILDKIT: 1
 
       - name: Build frontend image
-        run: docker build -t visa-application-frontend:${{ github.sha }} ./frontend
+        run: |
+          docker build \
+             --build-arg VITE_API_BASE_URL= \
+            -t visa-application-frontend:${{ github.sha }} ./frontend
         env:
           DOCKER_BUILDKIT: 1
 
