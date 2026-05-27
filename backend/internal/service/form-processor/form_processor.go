@@ -62,6 +62,10 @@ func (s *Service) Run(ctx context.Context) error {
 	s.logger.InfoContext(ctx, "form word file saved", "id", id, "path", filepath.Clean(path))
 
 	if err := s.sendMailWithAttachment(ctx, id, form, path); err != nil {
+		err = os.Remove(path)
+		if err != nil {
+			return fmt.Errorf("error removing file after failed send to mail: %w", err)
+		}
 		return fmt.Errorf("send form mail: %w", err)
 	}
 

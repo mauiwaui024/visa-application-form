@@ -111,51 +111,83 @@ func (s *smtpSender) SendWithAttachment(
 	return nil
 }
 
+// func (s *smtpSender) dialClient(ctx context.Context) (*smtp.Client, net.Conn, error) {
+// 	address := net.JoinHostPort(s.host, strconv.Itoa(s.port))
+
+// 	if s.port == 465 {
+// 		dialer := &net.Dialer{Timeout: 10 * time.Second}
+// 		conn, err := tls.DialWithDialer(dialer, "tcp", address, &tls.Config{
+// 			ServerName: s.host,
+// 			MinVersion: tls.VersionTLS12,
+// 		})
+// 		if err != nil {
+// 			return nil, nil, err
+// 		}
+// 		client, err := smtp.NewClient(conn, s.host)
+// 		if err != nil {
+// 			_ = conn.Close()
+// 			return nil, nil, err
+// 		}
+// 		return client, conn, nil
+// 	}
+
+// 	conn, err := (&net.Dialer{Timeout: 10 * time.Second}).DialContext(ctx, "tcp", address)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+
+// 	client, err := smtp.NewClient(conn, s.host)
+// 	if err != nil {
+// 		_ = conn.Close()
+// 		return nil, nil, err
+// 	}
+
+// 	if ok, _ := client.Extension("STARTTLS"); ok {
+// 		if err := client.StartTLS(&tls.Config{
+// 			ServerName: s.host,
+// 			MinVersion: tls.VersionTLS12,
+// 		}); err != nil {
+// 			_ = client.Close()
+// 			_ = conn.Close()
+// 			return nil, nil, err
+// 		}
+// 	}
+
+//		return client, conn, nil
+//	}
 func (s *smtpSender) dialClient(ctx context.Context) (*smtp.Client, net.Conn, error) {
 	address := net.JoinHostPort(s.host, strconv.Itoa(s.port))
+	dialer := &net.Dialer{Timeout: 30 * time.Second}
 
-	if s.port == 465 {
-		dialer := &net.Dialer{Timeout: 10 * time.Second}
-		conn, err := tls.DialWithDialer(dialer, "tcp", address, &tls.Config{
-			ServerName: s.host,
-			MinVersion: tls.VersionTLS12,
-		})
-		if err != nil {
-			return nil, nil, err
-		}
-		client, err := smtp.NewClient(conn, s.host)
-		if err != nil {
-			_ = conn.Close()
-			return nil, nil, err
-		}
-		return client, conn, nil
-	}
-
-	conn, err := (&net.Dialer{Timeout: 10 * time.Second}).DialContext(ctx, "tcp", address)
+	// 1. Устанавливаем чистое TCP-соединение
+	conn, err := dialer.DialContext(ctx, "tcp", address)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("tcp dial: %w", err)
 	}
 
 	client, err := smtp.NewClient(conn, s.host)
 	if err != nil {
-		_ = conn.Close()
-		return nil, nil, err
+		conn.Close()
+		return nil, nil, fmt.Errorf("smtp client: %w", err)
 	}
 
-	if ok, _ := client.Extension("STARTTLS"); ok {
-		if err := client.StartTLS(&tls.Config{
-			ServerName: s.host,
-			MinVersion: tls.VersionTLS12,
-		}); err != nil {
-			_ = client.Close()
-			_ = conn.Close()
-			return nil, nil, err
-		}
+	// 2. Включаем шифрование через STARTTLS
+	if ok, _ := client.Extension("STARTTLS"); !ok {
+		return client, conn, nil
+	}
+
+	tlsConfig := &tls.Config{
+		ServerName: s.host,
+		MinVersion: tls.VersionTLS12,
+	}
+	if err := client.StartTLS(tlsConfig); err != nil {
+		client.Close()
+		conn.Close()
+		return nil, nil, fmt.Errorf("starttls: %w", err)
 	}
 
 	return client, conn, nil
 }
-
 func buildMessage(from, to, subject, body, attachmentPath string) ([]byte, error) {
 	content, err := os.ReadFile(attachmentPath)
 	if err != nil {

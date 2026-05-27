@@ -14,7 +14,7 @@ import (
 )
 
 type Repository struct {
-	db      *sqlx.DB
+	db       *sqlx.DB
 	formRepo repository.FormSenderRepository
 
 	mu       sync.Mutex
@@ -38,12 +38,21 @@ func (r *Repository) Get(ctx context.Context) (string, model.SubmitFormRequest, 
 	var id string
 	err = tx.QueryRowxContext(
 		ctx,
-		`SELECT id
-		FROM form.visa_application
-		WHERE processed = false
-		ORDER BY created_at
-		FOR UPDATE SKIP LOCKED
-		LIMIT 1`,
+		`WITH next_row AS (
+			SELECT id
+			FROM form.visa_application
+			WHERE processed = false
+			  AND (locked_dt IS NULL OR locked_dt < localtimestamp)
+			ORDER BY created_at
+			LIMIT 1
+			FOR UPDATE SKIP LOCKED
+		)
+		UPDATE form.visa_application
+		SET locked_dt = localtimestamp + interval '10 minutes'
+		FROM next_row
+		WHERE form.visa_application.id = next_row.id
+		RETURNING form.visa_application.id;
+		`,
 	).Scan(&id)
 	if err != nil {
 		_ = tx.Rollback()

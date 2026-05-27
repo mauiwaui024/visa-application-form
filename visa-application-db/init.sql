@@ -218,6 +218,8 @@ CREATE TABLE form.visa_application (
 );
 
  alter table  form.visa_application add COLUMN if not exists  processed boolean NOT NULL DEFAULT false;
+ alter table  form.visa_application add COLUMN if not exists  locked_dt TIMESTAMPTZ NOT NULL default localtimestamp;
+;
 
 
 CREATE INDEX IF NOT EXISTS idx_visa_application_created_at
